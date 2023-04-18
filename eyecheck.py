@@ -656,7 +656,7 @@ class Eyecheck(QMainWindow):
             plt.cla()
             ax = self.figure.add_subplot(111)
             #self.cursor = Cursor(ax, color = '#C8D2DC', lw = 0.5) # THIS BREAKS THE PLOT!
-            if self.toolbar._active != 'ZOOM':
+            if self.toolbar._actions != 'ZOOM':
                 # Make it so the zoom button is selected by default
                 self.toolbar.zoom()
 

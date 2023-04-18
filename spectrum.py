@@ -89,8 +89,8 @@ class Spectrum(object):
         #                       / ( ((nonzeroweights-1.0)/nonzeroweights)
         #                           * sumofweights ) )
 
-        avgs = np.zeros([len(tempLines[4]), len(tempLines[4][0])], dtype='float')
-        stds = np.zeros([len(tempLines[4]), len(tempLines[4][0])], dtype='float')
+        avgs = np.zeros([len(tempLines[4]), len(tempLines[4][0])], dtype=float)
+        stds = np.zeros([len(tempLines[4]), len(tempLines[4][0])], dtype=float)
 
         for ii in range(len(tempLines[4])):
             avgs[ii, :] =  tempLines[4][ii][:,0]
@@ -459,10 +459,10 @@ class Spectrum(object):
             return errorMessage
         try:
             f = np.array(f)
-            self._wavelength = f[:,0].astype(np.float)
-            self._flux = f[:,1].astype(np.float)
+            self._wavelength = f[:,0].astype(float)
+            self._flux = f[:,1].astype(float)
             if len(f[1]) > 2:
-                err = f[:,2].astype(np.float)
+                err = f[:,2].astype(float)
                 self._var = err**2
             else: 
                 err = abs(self._flux)**0.05 + 1E-16
@@ -676,7 +676,7 @@ class Spectrum(object):
                            'luminosity': -1} # Luminosity class, 3 for giant, 5 for MS   
         else:
             iguess = np.nanargmin(self.FULLdistance)
-            if np.isin(np.int(self._tempLines[0][iguess]), np.array([0, 1, 2, 3])):
+            if np.isin(int(self._tempLines[0][iguess]), np.array([0, 1, 2, 3])):
                 try:
                     isThisAWD, thisSigma = self.isWD()
                     if isThisAWD:
@@ -687,69 +687,69 @@ class Spectrum(object):
                                        'metal':      0, # Metallicity
                                        'luminosity': 5} # Luminosity class, 3 for giant, 5 for MS   
                     else:
-                        self._guess = {'specType':   np.int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
-                                      'subType':    np.int(self._tempLines[1][iguess]), # Spectral subtype
+                        self._guess = {'specType':   int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
+                                      'subType':    int(self._tempLines[1][iguess]), # Spectral subtype
                                       'metal':      self._tempLines[2][iguess], # Metallicity
-                                      'luminosity': np.int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS  
+                                      'luminosity': int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS  
                 except RuntimeError:
                     stillWD = True
                     stillWD_step = 1
                     while stillWD:
                         iguess_dist = np.partition(self.FULLdistance, stillWD_step)[stillWD_step]
                         iguess = np.where(self.FULLdistance == iguess_dist)[0][0]
-                        if np.int(self._tempLines[0][iguess]) == 9:
+                        if int(self._tempLines[0][iguess]) == 9:
                             stillWD_step += 1
                         else:
                             stillWD = False
                             stillWD_step += 1
 
-            elif np.int(self._tempLines[0][iguess]) == 9: 
+            elif int(self._tempLines[0][iguess]) == 9: 
                 try:
                     isThisAWD, thisSigma = self.isWD()
                     if isThisAWD:
-                        self._guess = {'specType':   np.int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
+                        self._guess = {'specType':   int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
                                        'subType':    self._tempLines[1][iguess], # Spectral subtype
                                        'metal':      self._tempLines[2][iguess], # Metallicity
-                                       'luminosity': np.int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS  
+                                       'luminosity': int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS  
                     else:
                         stillWD = True
                         stillWD_step = 1
                         while stillWD:
                             iguess_dist = np.partition(self.FULLdistance, stillWD_step)[stillWD_step]
                             iguess = np.where(self.FULLdistance == iguess_dist)[0][0]
-                            if np.int(self._tempLines[0][iguess]) == 9:
+                            if int(self._tempLines[0][iguess]) == 9:
                                 stillWD_step += 1
                             else:
                                 stillWD = False
                                 stillWD_step += 1
 
-                        self._guess = {'specType':   np.int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
-                                       'subType':    np.int(self._tempLines[1][iguess]), # Spectral subtype
+                        self._guess = {'specType':   int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
+                                       'subType':    int(self._tempLines[1][iguess]), # Spectral subtype
                                        'metal':      self._tempLines[2][iguess], # Metallicity
-                                       'luminosity': np.int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS 
+                                       'luminosity': int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS 
                 except RuntimeError:
                     stillWD = True
                     stillWD_step = 1
                     while stillWD:
                         iguess_dist = np.partition(self.FULLdistance, stillWD_step)[stillWD_step]
                         iguess = np.where(self.FULLdistance == iguess_dist)[0][0]
-                        if np.int(self._tempLines[0][iguess]) == 9:
+                        if int(self._tempLines[0][iguess]) == 9:
                             stillWD_step += 1
                         else:
                             stillWD = False
                             stillWD_step += 1                     
-            elif np.int(self._tempLines[0][iguess]) == 8:
+            elif int(self._tempLines[0][iguess]) == 8:
                 # Save guess as dict       
-                self._guess = {'specType':   np.int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
+                self._guess = {'specType':   int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
                                'subType':    self.subTypeC[int(self._tempLines[1][iguess])], # Spectral subtype
                                'metal':      self._tempLines[2][iguess], # Metallicity
-                               'luminosity': np.int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS
+                               'luminosity': int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS
             else: 
                 # Save guess as dict       
-                self._guess = {'specType':   np.int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
-                               'subType':    np.int(self._tempLines[1][iguess]), # Spectral subtype
+                self._guess = {'specType':   int(self._tempLines[0][iguess]), # Spectral type, 0 for O to 7 for L, 8 = C, 9 = WD
+                               'subType':    int(self._tempLines[1][iguess]), # Spectral subtype
                                'metal':      self._tempLines[2][iguess], # Metallicity
-                               'luminosity': np.int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS
+                               'luminosity': int(self._tempLines[3][iguess])} # Luminosity class, 3 for giant, 5 for MS
 
         if self.guess['specType'] >= 10:
             self._isSB2 = True
