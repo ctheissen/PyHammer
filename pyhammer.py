@@ -53,10 +53,10 @@ def main(options):
             return
 
         # Open and setup the output files
-        outfile = open(options['outfile'], 'w')
+        outfile    = open(options['outfile'], 'w')
         rejectfile = open(options['rejectfile'], 'w')
         if options['lineOutfile']: lineOutfile = open('spectralIndices.csv', 'w')
-        outfile.write('#Filename,File Type,Radial Velocity (km/s),Guessed Spectral Type,Guessed [Fe/H],User Spectral Type,User [Fe/H]\n')
+        outfile.write('#Filename,File Type,Radial Velocity (km/s),Guessed Spectral Type,Guessed [Fe/H],User Spectral Type,User [Fe/H],chi2\n')
         rejectfile.write('#Filename,File Type,Spectra S/N\n')
         if options['lineOutfile']: lineOutfile.write('#Filename,CaK,CaK_var,Cadel,Cadel_var,CaI4217,CaI4217_var,Gband,Gband_var,Hgam,Hgam_var,FeI4383,FeI4383_var,FeI4404,FeI4404_var,Hbeta,Hbeta_var,MgI,MgI_var,NaD,NaD_var,CaI6162,CaI6162_var,Halpha,Halpha_var,CaH2,CaH2_var,CaH3,CaH3_var,TiO5,TiO5_var,VO7434,VO7434_var,VO7445,VO7445_var,VO-B,VO-B_var,VO7912,VO7912_var,Rb-B,Rb-B_var,NaI,NaI_var,TiO8,TiO8_var,TiO8440,TiO8440_var,Cs-A,Cs-A_var,CaII8498,CaII8498_var,CrH-A,CrH-A_var,CaII8662,CaII8662_var,FeI8689,FeI8689_var,FeH,FeH_var,C2-4382,C2-4382_var,C2-4737,C2-4737_var,C2-5165,C2-5165_var,C2-5636,C2-5636_var,CN-6959,CN-6959_var,CN-7088,CN-7088_var,CN-7259,CN-7259_var,CN-7820,CN-7820_var,CN-8067,CN-8067_var,CN-8270,CN-8270_var,WD-Halpha,WD-Halpha_var,WD-Hbeta,WD-Hbeta_var,WD-Hgamma,WD-Hgamma_var\n')
 
@@ -157,6 +157,15 @@ def main(options):
                     rejectMessage += 'FILE: ' + fname + '\nREASON: Could not guess spectral type. Error Message: {}\n\n'.format(e)
                     continue
 
+                # --- 7 ---
+                # Call findReducedChi2 function using the final guess
+                try:
+                    chi2 = spec.findReducedChi2()
+                except Exception as e:
+                    rejectfile.write(fname + ',' + ftype + ',' + str(snVal) + '\n')
+                    rejectMessage += 'FILE: ' + fname + '\nREASON: Could not compute the reduced chi-squared. Error Message: {}\n\n'.format(e)
+                    continue
+
                 # If the user wants the calculated spectral indices, write them to a file
                 if options['lineOutfile']:
                     for key, value in spec.lines.items(): 
@@ -168,16 +177,18 @@ def main(options):
                             continue
                         else:
                             lineOutfile.write(str(value[0]) + ',' + str(value[1])+',')
-                     
+        
+
                 # End of the automatic guessing. We should have:
                 #  1. Spectrum object with observed wavelength, flux, var,
                 #  2. rest wavelength,
                 #  3. spectral type (guessed),
                 #  4. radial velocity and uncertainty,
                 #  5. metallicity estimate,
-                #  6. and line indice measurements
+                #  6. compute reduced chi-squared,
+                #  7. and line indice measurements
 
-                # --- 7 ---
+                # --- 8 ---
                 if spec.guess['specType'] == -1:
                     rejectfile.write(fname + ',' + ftype + ',' + str(snVal) + '\n')
                     rejectMessage += 'FILE: ' + fname + '\nREASON: No good spectral type. Error Message: Spectrum might be all nans or 0s.\n\n'
@@ -190,7 +201,8 @@ def main(options):
                                   ftype + ',' +                                     # The filetype
                                   str(shift) + ',' +                                # The RV shift
                                   spec._SB2_filenameList[spec.guess['specType'] - 10][:-5] + ',' +    # The auto-guessed spectral type
-                                  '{:+2.1f}'.format(spec.guess['metal']) +          # The auto-guessed metallicity
+                                  '{:+2.1f}'.format(spec.guess['metal']) + ',' +    # The auto-guessed metallicity
+                                  '{:+2.1f}'.format(chi2) +                         # The chi^2 value
                                   ',nan,nan\n')                                     # The to-be-determined user classifications
                 else:
                     letterSpt = ['O', 'B', 'A', 'F', 'G', 'K', 'M', 'L', 'dC', 'DA'][spec.guess['specType']]
@@ -199,7 +211,8 @@ def main(options):
                                   ftype + ',' +                                     # The filetype
                                   str(shift) + ',' +                                # The RV shift
                                   letterSpt + str(spec.guess['subType']) + ',' +    # The auto-guessed spectral type
-                                  '{:+2.1f}'.format(spec.guess['metal']) +          # The auto-guessed metallicity
+                                  '{:+2.1f}'.format(spec.guess['metal']) + ',' +    # The auto-guessed metallicity
+                                  '{:+2.1f}'.format(chi2) +                         # The chi^2 value
                                   ',nan,nan\n')                                     # The to-be-determined user classifications
             
         #progress.done()
@@ -435,11 +448,11 @@ class PyHammerSettingsGui(QMainWindow):
         self.spectraPathHelpButton = QPushButton('?')
 
         # Eyecheck Field
-        self.eyecheckFrame = QFrame()
-        self.eyecheckLabel = QLabel('Do you want to skip to classifying by eye?', alignment = Qt.AlignCenter)
+        self.eyecheckFrame  = QFrame()
+        self.eyecheckLabel  = QLabel('Do you want to skip to classifying by eye?', alignment = Qt.AlignCenter)
         self.eyecheckChoice = QButtonGroup()
-        self.eyecheckYes = QRadioButton('Yes', checked = True)
-        self.eyecheckNo = QRadioButton('No', checked = False)
+        self.eyecheckYes    = QRadioButton('Yes', checked = True)
+        self.eyecheckNo     = QRadioButton('No', checked = False)
         self.eyecheckChoice.addButton(self.fullPathYes, 0)
         self.eyecheckChoice.addButton(self.fullPathNo, 1)
         self.eyecheckHelpButton = QPushButton('?')
@@ -1117,7 +1130,7 @@ if (__name__ == "__main__"):
                 sys.exit('Flag -s is unnecessary when -e is provided. Use -h for more info.')
             else:
                 options['eyecheck'] = False
-                options['sncut'] = arg
+                options['sncut']    = arg
 
         # Command line interface is requested.
         if (opt == '-c' or opt == '--cmd'):

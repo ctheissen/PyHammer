@@ -39,6 +39,9 @@ from collections import OrderedDict
 from scipy.optimize import curve_fit
 from tqdm import tqdm
 import warnings
+from astropy import units as u
+from specutils import Spectrum1D
+from specutils.manipulation import FluxConservingResampler, LinearInterpolatedResampler, SplineInterpolatedResampler
 
 # Check which PyQt version the user may have
 # installed and import the appropriate content

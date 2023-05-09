@@ -37,12 +37,12 @@ class Eyecheck(QMainWindow):
         """
 
         # Define some basic spectra related information
-        self.specType  = ['O', 'B', 'A', 'F', 'G', 'K', 'M', 'L', 'dC', 'DA']
-        self.subType   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        self.subTypeC = ['G', 'K', 'M', '', '', '', '', '', '', '']
-        self.subTypeWD   = ['0.5', '1.0', '1.5', '2.0', '2.5', '3.5', '5.0', '5.5', '6.5', '7.0']
-        self.metalType = ['-2.0', '-1.5', '-1.0', '-0.5', '+0.0', '+0.5', '+1.0']
-        self.templateDir = os.path.join(os.path.split(__file__)[0], 'resources', 'templates')
+        self.specType       = ['O', 'B', 'A', 'F', 'G', 'K', 'M', 'L', 'dC', 'DA']
+        self.subType        = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        self.subTypeC       = ['G', 'K', 'M', '', '', '', '', '', '', '']
+        self.subTypeWD      = ['0.5', '1.0', '1.5', '2.0', '2.5', '3.5', '5.0', '5.5', '6.5', '7.0']
+        self.metalType      = ['-2.0', '-1.5', '-1.0', '-0.5', '+0.0', '+0.5', '+1.0']
+        self.templateDir    = os.path.join(os.path.split(__file__)[0], 'resources', 'templates')
         self.SB2templateDir = os.path.join(os.path.split(__file__)[0], 'resources', 'templates_SB2')
 
         # Define an index to point to the current spectra in the list
@@ -53,11 +53,11 @@ class Eyecheck(QMainWindow):
 
         # Define plot related variables
         plt.style.use('ggplot')
-        self.full_xlim = None           # +--
-        self.full_ylim = None           # | Store these to keep track
+        self.full_xlim   = None         # +--
+        self.full_ylim   = None         # | Store these to keep track
         self.zoomed_xlim = None         # | of zoom states on the plot
         self.zoomed_ylim = None         # |
-        self.zoomed = False             # +--
+        self.zoomed      = False        # +--
 
         # Define the help strings to display when the user chooses a help
         # option from the menu bar
@@ -147,7 +147,7 @@ class Eyecheck(QMainWindow):
             'site for further details.')
 
         # Other variables
-        self.pPressNum = 0
+        self.pPressNum  = 0
         self.pPressTime = 0
 
     def readOutfile(self):
@@ -222,8 +222,8 @@ class Eyecheck(QMainWindow):
 
         # Define the basic, top-level GUI components
         self.widget = QWidget()       # The central widget in the main window
-        self.grid = QGridLayout()     # The layout manager of the central widget
-        self.icon = QIcon(os.path.join(os.path.split(__file__)[0],'resources','sun.ico'))
+        self.grid   = QGridLayout()   # The layout manager of the central widget
+        self.icon   = QIcon(os.path.join(os.path.split(__file__)[0],'resources','sun.ico'))
 
         # The menu bar
         self.createMenuBar()
@@ -242,12 +242,12 @@ class Eyecheck(QMainWindow):
 
         # The collection of sliders and their accompanying labels
         self.specTypeLabel, self.specTypeSlider = self.createSlider('Primary\nStellar\nType', self.specType, self.specTypeChanged)
-        self.subTypeLabel, self.subTypeSlider = self.createSlider('Primary\nStellar\nSubtype', self.subType, self.specSubtypeChanged)
-        self.metalLabel, self.metalSlider = self.createSlider('Primary\nMetallicity\n[Fe/H]', self.metalType, self.metallicityChanged)
+        self.subTypeLabel, self.subTypeSlider   = self.createSlider('Primary\nStellar\nSubtype', self.subType, self.specSubtypeChanged)
+        self.metalLabel, self.metalSlider       = self.createSlider('Primary\nMetallicity\n[Fe/H]', self.metalType, self.metallicityChanged)
 
         # The collection of SB2 sliders and their accompanying labels
         self.specTypeLabelSB2, self.specTypeSliderSB2 = self.createSB2Slider('Secondary\nStellar\nType', self.specType, self.specTypeChanged, 0)
-        self.subTypeLabelSB2, self.subTypeSliderSB2 = self.createSB2Slider('Secondary\nStellar\nSubtype', self.subType, self.specSubtypeChanged, 1)
+        self.subTypeLabelSB2, self.subTypeSliderSB2   = self.createSB2Slider('Secondary\nStellar\nSubtype', self.subType, self.specSubtypeChanged, 1)
 
         self.SB2button = QCheckBox("SB2")
         self.SB2button.setChecked(False)
@@ -275,8 +275,8 @@ class Eyecheck(QMainWindow):
         self.distMetric = self.createDistanceMetric()
 
         # Create the matplotlib plot
-        self.figure = plt.figure(figsize = (12,6))
-        self.canvas = FigureCanvas(self.figure)
+        self.figure  = plt.figure(figsize = (12,6))
+        self.canvas  = FigureCanvas(self.figure)
         self.toolbar = NavigationToolbar(self.canvas, self)
 
         vgrid = QVBoxLayout(spacing = 0)
@@ -526,7 +526,7 @@ class Eyecheck(QMainWindow):
         #     self.column += 1
 
         # Create the frame and put it in the top layer grid
-        frame = QFrame(frameShape = QFrame.StyledPanel, frameShadow = QFrame.Sunken, lineWidth = 0)
+        frame      = QFrame(frameShape = QFrame.StyledPanel, frameShadow = QFrame.Sunken, lineWidth = 0)
         sliderGrid = QGridLayout()
         frame.setLayout(sliderGrid)
         self.grid.addWidget(frame, 3, column)
@@ -1027,7 +1027,7 @@ class Eyecheck(QMainWindow):
         self.subTypeSlider.blockSignals(True)
         self.subTypeSliderSB2.blockSignals(True)
 
-        bad_primary = [0, 1, 7, 9]
+        bad_primary   = [0, 1, 7, 9]
         bad_secondary = [0, 1, 2, 7]
 
         if self.SB2button.isChecked() == True:
@@ -1096,8 +1096,8 @@ class Eyecheck(QMainWindow):
         while notfound_good_SecondarySubtypes:
             #print(counter)
             good_SecondarySubtypes = self.specObj._splitSB2spectypes[np.where((self.specObj._splitSB2spectypes[:,0] == self.specObj.letterSpt[primaryType_index]) & 
-                                                                       (self.specObj._splitSB2spectypes[:,2] == self.specObj.letterSpt[secondaryType_index]) & 
-                                                                       (self.specObj._splitSB2spectypes[:,1] == str(primarySubType_index)))[0], 3]  # .astype(int).tolist()
+                                                                              (self.specObj._splitSB2spectypes[:,2] == self.specObj.letterSpt[secondaryType_index]) & 
+                                                                              (self.specObj._splitSB2spectypes[:,1] == str(primarySubType_index)))[0], 3]  # .astype(int).tolist()
             if (secondaryType_index == 9) or (secondaryType_index == -1):
                 # print(primaryType_index, primarySubType_index, secondaryType_index, good_SecondarySubtypes, self.subTypeWD)
                 good_SecondarySubtypes = [int(np.where(np.array(self.subTypeWD) == ii)[0][0]) for ii in good_SecondarySubtypes if ii is not None]
@@ -1314,10 +1314,10 @@ class Eyecheck(QMainWindow):
         # use what is chosen on the GUI sliders
         if self.SB2button.isChecked() == True:
             if specState1 is None: specState1 = self.specTypeSlider.sliderPosition()
-            if subState1 is None: subState1 = self.subTypeSlider.sliderPosition()
+            if subState1 is None: subState1   = self.subTypeSlider.sliderPosition()
 
             if specState2 is None: specState2 = self.specTypeSliderSB2.sliderPosition()
-            if subState2 is None: subState2 = self.subTypeSliderSB2.sliderPosition()
+            if subState2 is None: subState2   = self.subTypeSliderSB2.sliderPosition()
 
             if (specState1 == 8):  #if SB2 with dC primary
                 filename = "dC" + self.subTypeC[subState1] + "+" + self.specType[specState2] + self.subTypeWD[subState2]
@@ -1346,7 +1346,7 @@ class Eyecheck(QMainWindow):
             return fullPath
         else:
             if specState1 is None: specState1 = self.specTypeSlider.sliderPosition()
-            if subState1 is None: subState1 = self.subTypeSlider.sliderPosition()
+            if subState1 is None: subState1   = self.subTypeSlider.sliderPosition()
             if metalState is None: metalState = self.metalSlider.sliderPosition()
 
             if (specState1 == 9):  # USE WD DA#.#.fits filename

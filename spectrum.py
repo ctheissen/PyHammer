@@ -14,16 +14,16 @@ class Spectrum(object):
 
     def __init__(self):
         # Define properties related to loaded spectrum
-        self._wavelength = None
-        self._flux = None
-        self._var = None
-        self._guess = None
+        self._wavelength     = None
+        self._flux           = None
+        self._var            = None
+        self._guess          = None
         self._normWavelength = 8000
 
         self.letterSpt = ['O', 'B', 'A', 'F', 'G', 'K', 'M', 'L', 'dC', 'DA']
         self.subType   = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        self.subTypeC = ['G', 'K', 'M', '', '', '', '', '', '', '']
-        self.subTypeWD   = ['0.5', '1.0', '1.5', '2.0', '2.5', '3.5', '5.0', '5.5', '6.5', '7.0']
+        self.subTypeC  = ['G', 'K', 'M', '', '', '', '', '', '', '']
+        self.subTypeWD = ['0.5', '1.0', '1.5', '2.0', '2.5', '3.5', '5.0', '5.5', '6.5', '7.0']
         self.metalType = ['-2.0', '-1.5', '-1.0', '-0.5', '+0.0', '+0.5', '+1.0']
 
         # The directory containing this file
@@ -123,8 +123,8 @@ class Spectrum(object):
         # can be compared to the templates. Note log10(e) = 0.43429448190325182
         # self.waveGrid = 10**(5*0.43429448190325182/299792.458 * np.arange(0,65000) + 3.55)
         waveStart = 3_550
-        waveEnd = 10_500
-        waveNum = 65_000
+        waveEnd   = 10_500
+        waveNum   = 65_000
         # 65,000 wavelengths gives 5km/s resolution across this region
         # dv = 2.9979e5 * (np.diff(waveGrid) / waveGrid[1:])
         self.waveGrid = np.logspace(np.log10(waveStart), np.log10(waveEnd), num=waveNum)
@@ -294,6 +294,13 @@ class Spectrum(object):
         # If we've made it to here, then we've loaded up the
         # data from the file properly and we can try to do
         # some further processing
+
+        # Save the inputs for future use
+        self._oriWave = np.copy(self._wavelength)
+        self._oriFlux = np.copy(self._flux)
+        self._oriVar  = np.copy(self._var)
+
+        # Interpolate onto a common grid (BAD IDEA!)
         self.interpOntoGrid()
         
         # Determine wavelength to normalize flux at
@@ -352,10 +359,10 @@ class Spectrum(object):
             errorMessage = 'Unable to open ' + filename + '.\n' + str(e)
             return errorMessage
         try:
-            self._flux = spec[1].data.field('Flux')
+            self._flux       = spec[1].data.field('Flux')
             self._wavelength = 10.0**spec[1].data.field('LogLam')
-            err = spec[1].data.field('PropErr')
-            self._var = err**2
+            err              = spec[1].data.field('PropErr')
+            self._var        = err**2
         except Exception as e:
             errorMessage = 'Unable to use ' + filename + '.\n' + str(e)
             return errorMessage
@@ -376,8 +383,8 @@ class Spectrum(object):
         try:
             np.seterr(divide = 'ignore')    # Ignore any potential division by zero
             self._wavelength = 10**( spec[0].header['coeff0'] + spec[0].header['coeff1']*np.arange(0,len(spec[0].data[0]), 1))
-            self._flux = spec[0].data[0]
-            self._var = 1 / spec[0].data[2]
+            self._flux       = spec[0].data[0]
+            self._var        = 1 / spec[0].data[2]
             #self._airToVac()
         except Exception as e:
             errorMessage = 'Unable to use ' + filename + '.\n' + str(e)
@@ -399,8 +406,8 @@ class Spectrum(object):
         try:
             np.seterr(divide = 'ignore')    # Ignore any potential division by zero
             self._wavelength = 10**spec[1].data['loglam']
-            self._flux = spec[1].data['flux']
-            self._var = 1 / spec[1].data['ivar']
+            self._flux       = spec[1].data['flux']
+            self._var        = 1 / spec[1].data['ivar']
             #self._airToVac()
         except Exception as e:
             errorMessage = 'Unable to use ' + filename + '.\n' + str(e)
@@ -424,7 +431,7 @@ class Spectrum(object):
             
             wave = []
             flux = []
-            var = []
+            var  = []
             for line in lineList:
                 lTemp = line.split()
                 if self.isNumber(lTemp[0]) and self.isNumber(lTemp[1]): 
@@ -438,8 +445,8 @@ class Spectrum(object):
                         var.append(err**2)
             
             self._wavelength = np.asarray(wave) 
-            self._flux = np.asarray(flux) 
-            self._var = np.asarray(var) 
+            self._flux       = np.asarray(flux) 
+            self._var        = np.asarray(var) 
         except Exception as e:
             errorMessage = 'Unable to use ' + filename + '.\n' + str(e)
             return errorMessage
@@ -522,17 +529,18 @@ class Spectrum(object):
             A method to put the spectrum flux and variance onto the same
             wavelength grid as the templates (5 km/s equally spaced bins)
         """
+
         # Interpolate flux and variance onto the wavelength grid
         interpFlux = np.interp(self.waveGrid, self._wavelength, self._flux, right=np.nan, left=np.nan)
-        interpVar = np.interp(self.waveGrid, self._wavelength, self._var, right=np.nan, left=np.nan) 
+        interpVar  = np.interp(self.waveGrid, self._wavelength, self._var, right=np.nan, left=np.nan) 
 
         #cut the grids off at 3650 and 10200 like the templates
         startIndex = bisect.bisect_right(self.waveGrid, 3650)
-        stopIndex = bisect.bisect_right(self.waveGrid, 10200)
+        stopIndex  = bisect.bisect_right(self.waveGrid, 10200)
 
         self._wavelength = self.waveGrid[startIndex:stopIndex]
-        self._flux = interpFlux[startIndex:stopIndex]
-        self._var = interpVar[startIndex:stopIndex]
+        self._flux       = interpFlux[startIndex:stopIndex]
+        self._var        = interpVar[startIndex:stopIndex]
         
     def measureLines(self):
         """
@@ -636,12 +644,12 @@ class Spectrum(object):
             """
             return np.isnan(y), lambda z: z.nonzero()[0]
 
-        p0 = np.array([6564.5377, 25.0, .75, -1.0, 1.0])
-        range_index = np.where((self._wavelength >= 6200.0) & (self._wavelength <= 6900.0))[0]
+        p0                = np.array([6564.5377, 25.0, .75, -1.0, 1.0])
+        range_index       = np.where((self._wavelength >= 6200.0) & (self._wavelength <= 6900.0))[0]
 
-        interp_flux = self._flux[range_index]
-        nans, x= nan_helper(interp_flux)
-        interp_flux[nans]= np.interp(x(nans), x(~nans), interp_flux[~nans])
+        interp_flux       = self._flux[range_index]
+        nans, x           = nan_helper(interp_flux)
+        interp_flux[nans] = np.interp(x(nans), x(~nans), interp_flux[~nans])
 
         with warnings.catch_warnings(): 
             #warnings.filterwarnings('ignore', message = 'Could not find appropriate MS Visual C Runtime ') 
@@ -667,6 +675,10 @@ class Spectrum(object):
         sumOfWeights = np.nansum(weights**2, 1)
         sumOfWeights[sumOfWeights == 0] = np.nan
         self.FULLdistance = np.nansum(((lines[:,0] - self._tempLineAvgs) * weights)**2, 1) / sumOfWeights
+        #print('TRYING')
+        #print(dir(self))
+        #sys.exit()
+        #self.chi2         = np.nansum(((lines[:,0] - self._tempLineAvgs) * weights)**2, 1) / sumOfWeights
         if np.all(np.isnan(self.FULLdistance)):
             iguess = None
             #Save guess as dict       
@@ -758,6 +770,207 @@ class Spectrum(object):
             self._isSB2 = False
             self.distance = self.FULLdistance[iguess]
 
+
+    def findReducedChi2(self):
+        """
+        findReducedChi2(spectrum)
+
+        Description:
+        Computes the reduced chi-squared for the spectrum and template
+
+        Input:
+        Spectrum object - Should have the wavelength, flux, and noise of the
+        observed spectrum.
+        bestGuess template - The wavelength and flux of the bestGuess.
+
+        Output:
+        The reduced chi-squared value.
+        """
+
+        #Get the flux and wavelength from the spectrum object 
+        #This should already be interpolated onto a log scale and normalized to 8000A (where templates are normalized)
+        wave      = self._wavelength
+        flux      = self._flux
+        var       = self._var
+        bestGuess = self._guess
+
+        #open the correct template spectrum 
+        # I have it only using the spectral type and subtype for the original guess 
+        # so I just cross correlate to the most common metallicity template for each spectral class
+        path     = 'resources/templates/'
+        path_SB2 = 'resources/templates_SB2/'
+
+        #Spectral type O 
+
+        if bestGuess['specType'] == 0:
+            tempName = 'O' + str(bestGuess['subType']) + '.fits'
+        #Spectral type B
+        elif bestGuess['specType'] == 1: 
+            tempName = 'B' + str(bestGuess['subType']) + '.fits'
+        #Spectral types A0, A1, A2 (where there are no metallicity changes)
+        elif bestGuess['specType'] == 2 and float(bestGuess['subType']) < 3:
+            tempName = 'A' + str(bestGuess['subType']) + '.fits'
+        #Spectral type A3 through A9
+        elif bestGuess['specType'] == 2 and float(bestGuess['subType']) > 2: 
+            tempName = 'A' + str(bestGuess['subType']) + '_-1.0_Dwarf.fits'
+        #Spectral type F
+        elif bestGuess['specType'] == 3: 
+            tempName = 'F' + str(bestGuess['subType']) + '_-1.0_Dwarf.fits'
+        #Spectral type G
+        elif bestGuess['specType'] == 4: 
+            tempName = 'G' + str(bestGuess['subType']) + '_+0.0_Dwarf.fits'
+        #Spectral type K 
+        elif bestGuess['specType'] == 5: 
+            tempName = 'K' + str(bestGuess['subType']) + '_+0.0_Dwarf.fits'
+        #Spectral type M (0 through 8) 
+        elif bestGuess['specType'] == 6 and float(bestGuess['subType']) < 9: 
+            tempName = 'M' + str(bestGuess['subType']) + '_+0.0_Dwarf.fits'
+        #Spectral type M9 (no metallicity)
+        elif bestGuess['specType'] == 6 and bestGuess['subType'] == 9: 
+            tempName = 'M' + str(bestGuess['subType']) + '.fits'
+        #Spectral type L
+        elif bestGuess['specType'] == 7: 
+            tempName = 'L' + str(bestGuess['subType']) + '.fits'
+        #Spectral type C
+        elif bestGuess['specType'] == 8: 
+            tempName = 'dC' + str(bestGuess['subType']) + '.fits'
+        #Spectral type WD
+        elif bestGuess['specType'] == 9: 
+            tempName = 'DA' + str(bestGuess['subType']) + '.fits'
+        #Spectral type SB2
+        elif self._isSB2:
+            # tempName = self._SB2_filenameList[bestGuess['specType'] - 10]
+            return np.nan
+        elif bestGuess['specType'] == -1:
+            return np.nan
+        # Open the template
+        with warnings.catch_warnings():
+            # Ignore a very particular warning from some versions of astropy.io.fits
+            # that is a known bug and causes no problems with loading fits data.
+            warnings.filterwarnings('ignore', message = 'Could not find appropriate MS Visual C Runtime ')
+            if self._isSB2:
+                temp = fits.open(path_SB2+tempName)
+            else:
+                temp = fits.open(path+tempName)
+                                    
+        tempFlux = temp[1].data['flux']
+        tempWave = 10**temp[1].data['loglam']
+        tempFlux = Spectrum.normalize(tempWave, self._normWavelength, tempFlux)
+        
+        ''' Everything commented out is technically correct, but it takes way too long to run
+        # Normalize the flux
+        normFlux = Spectrum.normalize(self._oriWave, self._normWavelength, self._oriFlux)
+        normVar  = Spectrum.normalize(self._oriWave, self._normWavelength, self._oriVar)
+
+        # Downsample spectra to the same resolution
+        print(np.min(self._oriWave), np.max(self._oriWave))
+        print(np.median(self._oriWave[1:] - self._oriWave[:-1]))
+        print(np.min(tempWave), np.max(tempWave))
+        print(np.median(tempWave[1:] - tempWave[:-1]))
+        # Find the overlap region between the template and the input spectrum
+        k         = np.where( (self._oriWave >= np.min(tempWave)) & (self._oriWave <= np.max(tempWave)) )
+        print('k', k )
+        newWaves  = self._oriWave[k]
+        newFluxes = normFlux[k]
+        newVars   = self._oriVar[k]
+        k2        = np.where( (tempWave >= np.min(newWaves)) & (tempWave <= np.max(newWaves)) )
+        print('k2', k2)
+        tempWave2 = tempWave[k2]
+        tempFlux2 = tempFlux[k2]
+        print(np.median(self._oriWave[1:] - self._oriWave[:-1]) > np.median(tempWave[1:] - tempWave[:-1]))
+
+        if np.median(self._oriWave[1:] - self._oriWave[:-1]) > np.median(tempWave[1:] - tempWave[:-1]): # downsample the template spectrum
+            print('1')
+            print(tempWave2, tempFlux2)
+            input_spec       = Spectrum1D(spectral_axis=tempWave2*u.AA, flux=tempFlux2*u.Jy)
+            print('2')
+            fluxcon          = FluxConservingResampler()
+            print('3')
+            print(input_spec)
+            new_spec_fluxcon = fluxcon(input_spec, newWaves*u.AA) 
+            otherFlux        = newFluxes
+            print('HERE')
+            print(dir(new_spec_fluxcon))
+            print(new_spec_fluxcon.wavelength)
+            print(new_spec_fluxcon.flux)
+
+            plt.plot(new_spec_fluxcon.wavelength, new_spec_fluxcon.flux, alpha=0.5, label='template')
+            plt.plot(newWaves, newFluxes, alpha=0.5, label='spectrum')
+            plt.legend()
+            plt.savefig('test.png')
+            #plt.show()
+
+            reducedChi2  = np.nansum([((t-s)/err)**2 for t,s,err in zip(newFluxes, new_spec_fluxcon.flux.value, newVars)]) / float(len(newFluxes))
+
+        else: # downsample the input spectrum
+            input_spec       = Spectrum1D(spectral_axis=newWaves*u.AA, flux=newFluxes*u.Jy, uncertainty=np.sqrt(newVars))
+            fluxcon          = FluxConservingResampler()
+            new_spec_fluxcon = fluxcon(input_spec, tempWave2*u.AA) 
+            print('HERE2')
+            print(dir(new_spec_fluxcon))
+            reducedChi2  = np.nansum([((t-s)/err)**2 for t,s,err in zip(tempFlux2, new_spec_fluxcon.flux.value, new_spec_fluxcon.uncertainty.value)]) / float(len(tempFlux2))
+
+
+        print('CHI2:', reducedChi2)
+        '''
+
+        #print(tempWave)
+        #print(wave)
+        k         = np.where( (wave >= np.min(self._oriWave)) & (wave <= np.max(self._oriWave)) )[0]
+        #print('k', k )
+        wave2     = wave[k]
+        flux2     = flux[k]
+        var2      = var[k]
+        k2        = np.where( (tempWave >= np.min(self._oriWave)) & (tempWave <= np.max(self._oriWave)) )[0]
+        #print('k2', k2)
+        tempWave2 = tempWave[k2]
+        tempFlux2 = tempFlux[k2]
+        k3        = np.where( (wave2 >= np.min(tempWave2)) & (wave2 <= np.max(tempWave2)) )[0]
+        #print('k3', k3 )
+        #wave3     = wave2[k3]
+        #flux3     = flux2[k3]
+        #var3      = var2[k3]
+        #m         = min(len(wave3), len(tempWave2))
+        #print(m)
+        
+        def find_nearest(array,value):
+            #print('1')
+            idx = np.searchsorted(array, value, side="left")
+            #print('2')
+            if idx > 0 and (idx == len(array) or abs(value - array[idx-1]) < abs(value - array[idx])):
+                #print('3')
+                return idx-1
+            else:
+                #print('4')
+                return idx
+        
+        testcount = 0
+        #print(tempWave2)
+        valueArr  = []
+        for i in k3:#a,b,c,d,e in zip(tempWave2[:m], tempFlux2[:m], wave3[:m], flux3[:m], var3[:m]):
+            #print(wave2[i], flux2[i])
+            #print(testcount, a,c,b,d,((b-d)/e)**2)
+            index2 = find_nearest(tempWave, wave2[i])
+            #print(index2)
+            #print(tempWave[index2])
+            valueArr.append( ( (flux2[i]-tempFlux[index2]) / var2[i] )**2 )
+            testcount+=1
+            #if testcount == 10: sys.exit()
+
+        reducedChi2  = np.nansum(np.array(valueArr)) / float(len(valueArr))
+        '''
+        print(wave2[0] - tempWave2[0])
+        print(np.min(wave2), np.max(wave2))
+        print(np.min(tempWave2), np.max(tempWave2))
+        print()
+        reducedChi2  = np.nansum([((t-s)/err)**2 for t,s,err in zip(tempFlux[:m], flux[:m], var[:m])]) / float(m)
+        '''
+        #print('CHI2:', reducedChi2)
+        return reducedChi2
+
+
+
+
     def findRadialVelocity(self):
         """
         findRadialVelocity(spectrum)
@@ -794,14 +1007,14 @@ class Spectrum(object):
 
         #Get the flux and wavelength from the spectrum object 
         #This should already be interpolated onto a log scale and normalized to 8000A (where templates are normalized)
-        wave = self._wavelength
-        flux = self._flux
+        wave      = self._wavelength
+        flux      = self._flux
         bestGuess = self._guess
 
         #open the correct template spectrum 
         # I have it only using the spectral type and subtype for the original guess 
         # so I just cross correlate to the most common metallicity template for each spectral class
-        path = 'resources/templates/'
+        path     = 'resources/templates/'
         path_SB2 = 'resources/templates_SB2/'
 
         #Spectral type O 
@@ -862,9 +1075,9 @@ class Spectrum(object):
         tempFlux = Spectrum.normalize(tempWave, self._normWavelength, tempFlux)
 
         # Get the regions for correlation
-        specRegion1 = np.where( (wave > 5000) & (wave < 6000) )
-        specRegion2 = np.where( (wave > 6000) & (wave < 7000) )
-        specRegion3 = np.where( (wave > 7000) & (wave < 8000) )
+        specRegion1  = np.where( (wave > 5000) & (wave < 6000) )
+        specRegion2  = np.where( (wave > 6000) & (wave < 7000) )
+        specRegion3  = np.where( (wave > 7000) & (wave < 8000) )
         #noise regions: still not sure if we should have these or not
         noiseRegion1 = np.where( (wave > 5000) & (wave < 5100) )
         noiseRegion2 = np.where( (wave > 6800) & (wave < 6900) )
@@ -875,45 +1088,45 @@ class Spectrum(object):
 
         if nonNanWave[0] < 5000 and nonNanWave[-1] > 6000:
             shift1 = float(self.xcorl(flux[specRegion1], tempFlux[specRegion1], 50, 'fine'))
-            snr1 = np.mean(flux[noiseRegion1]) / np.std(flux[noiseRegion1])
+            snr1   = np.mean(flux[noiseRegion1]) / np.std(flux[noiseRegion1])
             if nonNanWave[-1] > 7000:
                 shift2 = float(self.xcorl(flux[specRegion2], tempFlux[specRegion2], 50, 'fine'))
-                snr2 = np.mean(flux[noiseRegion2]) / np.std(flux[noiseRegion2])
+                snr2   = np.mean(flux[noiseRegion2]) / np.std(flux[noiseRegion2])
                 if nonNanWave[-1] > 8000:
                     shift3 = float(self.xcorl(flux[specRegion3], tempFlux[specRegion3], 50, 'fine'))
-                    snr3 = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
+                    snr3   = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
                 else:
                     print('CAUTION: radial velocity may not be accurate, smaller wavelength region than tested on')
                     shift3 = np.nan
-                    snr3 = np.nan
+                    snr3   = np.nan
             else:
                 print('CAUTION: radial velocity may not be accurate, smaller wavelength region than tested on')
                 shift2 = np.nan
-                snr2 = np.nan
+                snr2   = np.nan
                 shift3 = np.nan
-                snr3 = np.nan
+                snr3   = np.nan
                 
         elif nonNanWave[0] > 5000 and nonNanWave[0] < 6000 and nonNanWave[-1] > 7000:
             print('CAUTION: radial velocity may not be accurate, smaller wavelength region than tested on')
             shift1 = np.nan
-            snr1 = np.nan
+            snr1   = np.nan
             shift2 = float(self.xcorl(flux[specRegion2], tempFlux[specRegion2], 50, 'fine'))
-            snr2 = np.mean(flux[noiseRegion2]) / np.std(flux[noiseRegion2])
+            snr2   = np.mean(flux[noiseRegion2]) / np.std(flux[noiseRegion2])
             if nonNanWave[-1] > 8000:
                 shift3 = float(self.xcorl(flux[specRegion3], tempFlux[specRegion3], 50, 'fine'))
-                snr3 = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
+                snr3   = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
             else:
                 shift3 = np.nan
-                snr3 = np.nan
+                snr3   = np.nan
 
         elif nonNanWave[0] > 6000 and nonNanWave[0] < 7000 and nonNanWave[-1] > 8000:
             print('CAUTION: radial velocity may not be accurate, smaller wavelength region than tested on')
             shift1 = np.nan
-            snr1 = np.nan
+            snr1   = np.nan
             shift2 = np.nan
-            snr2 = np.nan
+            snr2   = np.nan
             shift3 = float(self.xcorl(flux[specRegion3], tempFlux[specRegion3], 50, 'fine'))
-            snr3 = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
+            snr3   = np.mean(flux[noiseRegion3]) / np.std(flux[noiseRegion3])
 
         else:
             print('Spectrum too short to compute accurate radial velocity')
@@ -921,25 +1134,25 @@ class Spectrum(object):
             return rvFinal
 
         # Convert to Radial Velocities
-        pixel = wave[1]-wave[0]
-        wave0 = (wave[1]+wave[0]) / 2
-        c = 299792.458 # km/s
+        pixel   = wave[1]-wave[0]
+        wave0   = (wave[1]+wave[0]) / 2
+        c       = 299792.458 # km/s
         radVel1 = shift1 * pixel / wave0 * c
         radVel2 = shift2 * pixel / wave0 * c
         radVel3 = shift3 * pixel / wave0 * c
 
         # Look for convergence of the radial velocities
-        rvs = np.array([radVel1, radVel2, radVel3])
+        rvs  = np.array([radVel1, radVel2, radVel3])
         snrs = np.array([snr1, snr2, snr3])
         #make sure none of the rvs are nans, if so get rid of them
-        rvs = rvs[np.isfinite(rvs)]
+        rvs  = rvs[np.isfinite(rvs)]
 
         true = False
         firstTime = 1
         broke = False
         while true == False:
             trueCount = 0
-            chi = []
+            chi       = []
 
             for rv_ in rvs:
                 #Start with highest signal-to-noise value
@@ -1009,9 +1222,9 @@ class Spectrum(object):
 
         # Take the inverse Fourier transform and multiply by length to put it in IDL terms
         fourtr = np.fft.ifft(nsp) * len(nsp)   
-        sig = np.arange(ln)/float(ln) - .5
-        sig = np.roll(sig, int(ln/2))
-        sh = sig*2. * np.pi * shift
+        sig    = np.arange(ln)/float(ln) - .5
+        sig    = np.roll(sig, int(ln/2))
+        sh     = sig*2. * np.pi * shift
 
         count=0
         shfourtr = np.zeros( (len(sh), 2) )
@@ -1047,12 +1260,12 @@ class Spectrum(object):
         #16-Jun-16 AYK   Added to hammer code
         # Set the defaults
         # Set the defaults
-        pr = 0
-        fine = 0
-        mult=0
-        fshft=0
-        full=0
-        ff = 0
+        pr    = 0
+        fine  = 0
+        mult  = 0
+        fshft = 0
+        full  = 0
+        ff    = 0
 
         # Read the arguments
         for arg in args:
@@ -1074,11 +1287,11 @@ class Spectrum(object):
             print( 'Maximum allowable "range" for this case is' + str((length-1)/2))
         newln = length - 2*range1  # Leave "RANGE" on ends for overhang.
 
-        te = temp/(np.sum(temp)/ln)
-        st = star/(np.sum(star)/ls) # Be normal already!
+        te     = temp/(np.sum(temp)/ln)
+        st     = star/(np.sum(star)/ls) # Be normal already!
         newend = range1 + newln - 1
-        x = np.arange(2 * range1 + 1) - range1
-        chi = np.zeros(2 * range1 + 1)
+        x      = np.arange(2 * range1 + 1) - range1
+        chi    = np.zeros(2 * range1 + 1)
 
         if full == 1:
             pr=1
@@ -1166,6 +1379,7 @@ class Spectrum(object):
     def normalizeFlux(self):
         """Defined purely for convenience in normalizing the loaded spectrum."""
         self._flux = Spectrum.normalize(self._wavelength, self._normWavelength, self._flux)
+        self._var  = Spectrum.normalize(self._wavelength, self._normWavelength, self._var)
 
     ##
     # Static Methods
@@ -1181,9 +1395,9 @@ class Spectrum(object):
         normIndex = bisect.bisect_right(wavelength, normWavelength)
 
         if np.isnan(flux[normIndex]): 
-            nonNanWave =  wavelength[np.where( np.isfinite(self._flux) )]
+            nonNanWave     =  wavelength[np.where( np.isfinite(self._flux) )]
             normWavelength = (nonNanWave[-1] + nonNanWave[0])/2
-            normIndex = bisect.bisect_right(wavelength, normWavelength)
+            normIndex      = bisect.bisect_right(wavelength, normWavelength)
 
         normFactor = np.mean(flux[normIndex-10:normIndex+10])
 
